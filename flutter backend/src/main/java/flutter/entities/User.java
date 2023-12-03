@@ -10,7 +10,12 @@ import jakarta.persistence.Id;
 
 @Entity
 public class User implements Serializable {
-	
+	private String name;
+	private String lastName;
+	private String email;
+	private String password;
+	private String role;
+
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
@@ -51,11 +56,6 @@ public class User implements Serializable {
 	public void setRole(String role) {
 		this.role = role;
 	}
-	private String name;
-	private String lastName;
-	private String email;
-	private String password;
-	private String role;
 
 	
 	
