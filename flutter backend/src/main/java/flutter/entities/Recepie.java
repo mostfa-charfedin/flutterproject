@@ -13,6 +13,7 @@ public class Recepie implements Serializable {
 	private String name;
 	private String description;
 	private String ingredient;
+	private String imageUrl;
 
 	@Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -49,6 +50,13 @@ public class Recepie implements Serializable {
 	public void setId(Long id) {
 		this.id = id;
 	}
-    
+	
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 
 }

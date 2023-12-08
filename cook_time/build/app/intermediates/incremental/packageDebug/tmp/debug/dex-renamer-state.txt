@@ -1,4 +1,4 @@
-#Tue Dec 05 14:53:17 CET 2023
+#Fri Dec 08 22:04:37 CET 2023
 base.0=C\:\\Users\\USER\\cooktimeflutter\\flutterproject\\cook_time\\build\\app\\intermediates\\dex\\debug\\mergeDexDebug\\classes.dex
 path.0=classes.dex
 renamed.0=classes.dex
