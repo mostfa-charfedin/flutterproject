@@ -4,15 +4,14 @@ class User {
   String lastName;
   String email;
   String password;
-  String role;
+
 
   User({
     required this.id,
     required this.name,
     required this.lastName,
     required this.email,
-    required this.password,
-    required this.role,
+    required this.password
   });
 
 
@@ -23,7 +22,7 @@ class User {
       'lastName': lastName,
       'email': email,
       'password': password,
-      'role': role,
+
     };
   }
 
@@ -33,8 +32,7 @@ class User {
       name: json['name'],
       lastName: json['lastName'],
       email: json['email'],
-      password: json['password'],
-      role: json['role'],
+      password: json['password']
     );
   }
 }

@@ -1,8 +1,14 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:cook_time/recepieModel.dart';
 import 'package:cook_time/recipe_form.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'UserModel.dart';
+import 'connection.dart';
 import 'http_service.dart';
 import 'modifyRecepie.dart';
 
@@ -22,6 +28,7 @@ class _RecipeListState extends State<RecipeList> {
   void initState() {
     super.initState();
     fetchRecipes();
+    httpService.checkUserLoginStatus(context);
   }
 
   Future<void> fetchRecipes() async {
@@ -36,27 +43,46 @@ class _RecipeListState extends State<RecipeList> {
     }
   }
 
-  Future<void> addRecipe(Recipe recipe) async {
+  void refreshModifiedList(Recipe modifiedRecipe) {
+    print('Refreshed Modified Recipe ID: ${modifiedRecipe.id}');
+    print('Refreshed Modified Recipe Image URL: ${modifiedRecipe.image}');
+
+    int index = recipes.indexWhere((recipe) => recipe.id == modifiedRecipe.id);
+    setState(() {
+      recipes[index] = modifiedRecipe;
+      filterRecipes(searchController.text);
+    });
+  }
+
+  Future<void> addRecipe(Recipe recipe, XFile? imageFile) async {
     try {
-      await httpService.addRecipe(recipe);
-      fetchRecipes();
+      if (imageFile != null) {
+        await httpService.addRecipe(recipe, imageFile as File);
+        fetchRecipes(); // Refresh the list after adding a recipe
+      } else {
+        // Handle the case where imageFile is null, maybe show an error message
+        print('Error: imageFile is null');
+        // You might want to handle this case according to your application's logic
+      }
     } catch (e) {
       print('Error adding recipe: $e');
     }
   }
 
+
   Future<void> viewProfile() async {
-    String userId = '1';
+
+    String userId = (await httpService.getUserIdFromSharedPreferences()).toString();
 
     try {
       User userProfile = await _fetchUserProfile(userId);
-
       bool isEditing = false;
       bool showPassword = false;
       TextEditingController nameController = TextEditingController(text: userProfile.name);
       TextEditingController lastNameController = TextEditingController(text: userProfile.lastName);
       TextEditingController emailController = TextEditingController(text: userProfile.email);
       TextEditingController pwdController = TextEditingController(text: userProfile.password);
+      final HttpService httpService = HttpService();
 
       showDialog(
         context: context,
@@ -115,7 +141,7 @@ class _RecipeListState extends State<RecipeList> {
                       ),
                       SizedBox(height: 8),
                       Text('Email: ${userProfile.email}'),
-                      Text('Password: ****'), // Display masked password
+                      Text('Password: ********'), // Display masked password
                     ],
                   ),
                 ),
@@ -138,7 +164,7 @@ class _RecipeListState extends State<RecipeList> {
                           lastName: lastNameController.text,
                           email: emailController.text,
                           password: pwdController.text,
-                          role: 'User',
+
                         );
 
                         await httpService.updateUser(updatedUser);
@@ -202,7 +228,13 @@ class _RecipeListState extends State<RecipeList> {
           ),
           IconButton(
             icon: Icon(Icons.logout),
-            onPressed: () {
+            onPressed: () async {
+
+              await httpService.clearSharedPreferences();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => LoginPage()),
+              );
             },
           ),
         ],
@@ -222,40 +254,44 @@ class _RecipeListState extends State<RecipeList> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: filteredRecipes.length,
-              itemBuilder: (context, index) {
-                final recipe = filteredRecipes[index];
-                return GestureDetector(
-                  onTap: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ModifyRecipe(recipe: recipe)),
-                    );
+            child: FutureBuilder(
+              future: httpService.fetchRecipes(),
+              builder: (context,AsyncSnapshot<List<Recipe>> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
 
-                    if (result is Recipe) {
-                      refreshModifiedList(result);
-                    }
-                  },
-                  child: Card(
-                    margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Image.network(
-                            recipe.imageUrl,
-                            height: 100,
-                            width: double.infinity,
+                  return ListView.builder(
+                    itemCount: filteredRecipes.length,
+                    itemBuilder: (context, index) {
+                      final recipe = filteredRecipes[index];
+
+                      return Card(
+                        margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: ListTile(
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => ModifyRecipe(recipe: recipe)),
+                            );
+
+                            if (result is Recipe) {
+                              refreshModifiedList(result);
+                            }
+                          },
+                          leading: Image.memory(
+                            base64Decode(recipe.image),
+                            height: double.maxFinite,
+                            width: 100,
                             fit: BoxFit.cover,
                           ),
-                          SizedBox(height: 8),
-                          Text(
+                          title: Text(
                             recipe.name,
                             style: TextStyle(
                               fontFamily: 'Norican',
@@ -263,16 +299,15 @@ class _RecipeListState extends State<RecipeList> {
                               color: Color(0xFF04C7DC),
                             ),
                           ),
-                          SizedBox(height: 8),
-                          Text(
+                          subtitle: Text(
                             'Description: ${recipe.description}',
                             style: TextStyle(fontSize: 18, color: Colors.black54),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
+                        ),
+                      );
+                    },
+                  );
+                }
               },
             ),
           ),
@@ -286,24 +321,14 @@ class _RecipeListState extends State<RecipeList> {
           );
 
           if (result is Recipe) {
-            addRecipe(result);
+            addRecipe(result, null);
+            fetchRecipes();
           }
         },
         tooltip: 'Add Recipe',
         child: Icon(Icons.add),
-        backgroundColor: Color(0xFF02F896),
+        backgroundColor: Color(0xFF02F696),
       ),
     );
-  }
-
-  void refreshModifiedList(Recipe modifiedRecipe) {
-    print('Refreshed Modified Recipe ID: ${modifiedRecipe.id}');
-    print('Refreshed Modified Recipe Image URL: ${modifiedRecipe.imageUrl}');
-
-    int index = recipes.indexWhere((recipe) => recipe.id == modifiedRecipe.id);
-    setState(() {
-      recipes[index] = modifiedRecipe;
-      filterRecipes(searchController.text);
-    });
   }
 }

@@ -90,6 +90,9 @@ public class UserServicempl implements UserService{
 	        if (updatedUser.getPassword() != null) {
 	            existingUser.setPassword(updatedUser.getPassword());
 	        }
+	        if (updatedUser.getEmail() != null) {
+	            existingUser.setEmail(updatedUser.getEmail());
+	        }
 	        
 	        // Save the updated user
 	        return userRepository.save(existingUser);

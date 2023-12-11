@@ -1,7 +1,11 @@
-import 'package:cook_time/recepieModel.dart';
-import 'package:flutter/material.dart';
 
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'http_service.dart';
+import 'recepieModel.dart';
 
 class ModifyRecipe extends StatefulWidget {
   final Recipe recipe;
@@ -17,7 +21,9 @@ class _ModifyRecipeState extends State<ModifyRecipe> {
   late TextEditingController nameController;
   late TextEditingController descriptionController;
   late TextEditingController ingredientController;
-  late TextEditingController imageUrlController;
+
+  late XFile? imageFile; // Updated to use XFile from image_picker
+  final picker = ImagePicker();
 
   @override
   void initState() {
@@ -26,15 +32,18 @@ class _ModifyRecipeState extends State<ModifyRecipe> {
     nameController = TextEditingController(text: widget.recipe.name);
     descriptionController = TextEditingController(text: widget.recipe.description);
     ingredientController = TextEditingController(text: widget.recipe.ingredient);
-    imageUrlController = TextEditingController(text: widget.recipe.imageUrl);
+    imageFile = null;
   }
 
   Future<void> submitForm() async {
     String name = nameController.text;
     String description = descriptionController.text;
     String ingredient = ingredientController.text;
-    String imageUrl = imageUrlController.text;
 
+    Future<String> imageToBase64(String path) async {
+      final bytes = await File(path).readAsBytes();
+      return base64Encode(bytes);
+    }
     if (name.isEmpty || description.isEmpty || ingredient.isEmpty) {
       showDialog(
         context: context,
@@ -56,18 +65,26 @@ class _ModifyRecipeState extends State<ModifyRecipe> {
       return;
     }
 
+    try {
+      String imageUrl = '';
+      if (imageFile != null) {
+        // Convert the picked image to base64
+        imageUrl = await imageToBase64(imageFile!.path);
+      } else {
+        imageUrl = widget.recipe.image;
+      }
 
     Recipe modifiedRecipe = Recipe(
       id: widget.recipe.id,
       name: name,
       description: description,
       ingredient: ingredient,
-      imageUrl: imageUrl,
+      image: imageUrl,
     );
 
-    Navigator.pop(context, modifiedRecipe);
+      Navigator.pop(context, modifiedRecipe);
 
-    try {
+
       await httpService.UpdateRecipe(modifiedRecipe);
     } catch (e) {
       showDialog(
@@ -87,6 +104,14 @@ class _ModifyRecipeState extends State<ModifyRecipe> {
           );
         },
       );
+    }
+  }
+  Future<void> pickImage() async {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        imageFile = pickedFile;
+      });
     }
   }
 
@@ -149,26 +174,23 @@ class _ModifyRecipeState extends State<ModifyRecipe> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text('Image URL'),
-          SizedBox(height: 8),
-          TextField(
-            controller: imageUrlController,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-            ),
+          Text('Select Image'),
+          SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              pickImage();
+            },
+            child: Text('Pick Image'),
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 16),
+          if (imageFile != null)
+            Image.file(
+              File(imageFile!.path),
+              height: 100,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
 
-          imageUrlController.text.isNotEmpty
-              ? Image.network(
-            imageUrlController.text,
-            key: UniqueKey(),
-            height: 200,
-            width: 200,
-            fit: BoxFit.cover,
-          )
-              : Container(),
         ],
       ),
     );

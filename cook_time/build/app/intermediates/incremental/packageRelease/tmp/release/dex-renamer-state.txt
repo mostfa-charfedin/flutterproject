@@ -1,4 +1,0 @@
-#Tue Dec 05 13:56:27 CET 2023
-base.0=C\:\\Users\\USER\\cooktimeflutter\\flutterproject\\cook_time\\build\\app\\intermediates\\dex\\release\\minifyReleaseWithR8\\classes.dex
-path.0=classes.dex
-renamed.0=classes.dex

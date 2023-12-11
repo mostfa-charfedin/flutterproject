@@ -1,6 +1,10 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:cook_time/recepieModel.dart';
 import 'package:flutter/material.dart';
 import 'http_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class RecipeForm extends StatefulWidget {
   @override
@@ -12,7 +16,14 @@ class _RecipeFormState extends State<RecipeForm> {
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController ingredientController = TextEditingController();
   late TextEditingController imageUrlController = TextEditingController();
+  XFile? imageFile;
+  final picker = ImagePicker();
   final HttpService httpService = HttpService();
+
+  Future<String> imageToBase64(String path) async {
+    final bytes = await File(path).readAsBytes();
+    return base64Encode(bytes);
+  }
 
   Future<void> submitForm() async {
     String name = nameController.text;
@@ -21,6 +32,7 @@ class _RecipeFormState extends State<RecipeForm> {
     String imageUrl = imageUrlController.text;
 
     if (name.isEmpty || description.isEmpty || ingredient.isEmpty) {
+      // Handle the case where any of the required fields is empty
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -42,38 +54,40 @@ class _RecipeFormState extends State<RecipeForm> {
     }
 
     try {
-      Recipe addedRecipe = Recipe(
-        id: 0,
-        name: name,
-        description: description,
-        ingredient: ingredient,
-        imageUrl: imageUrl,
-      );
+      if (imageFile != null) {
+        Recipe addedRecipe = Recipe(
+          id: 0,
+          name: name,
+          description: description,
+          ingredient: ingredient,
+          image: await imageToBase64(imageFile!.path),
+        );
 
-      nameController.clear();
-      descriptionController.clear();
-      ingredientController.clear();
-      imageUrlController.clear();
+        // Convert XFile to File
+        File file = File(imageFile!.path);
 
-      Navigator.pop(context, addedRecipe);
+        await httpService.addRecipe(addedRecipe, file);
+
+        nameController.clear();
+        descriptionController.clear();
+        ingredientController.clear();
+        imageUrlController.clear();
+        imageFile = null; // Reset imageFile after adding the recipe
+
+        Navigator.pop(context, addedRecipe);
+      } else {
+        print('Error: imageFile is null');
+      }
     } catch (e) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Error'),
-            content: Text('Error adding recipe: $e'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
+      print('Error adding recipe: $e');
+    }
+  }
+  Future<void> pickImage() async {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        imageFile = pickedFile;
+      });
     }
   }
 
@@ -131,15 +145,22 @@ class _RecipeFormState extends State<RecipeForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text('Image URL'),
-          SizedBox(height: 8),
-          TextField(
-            controller: imageUrlController,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-            ),
+          Text('Select Image'),
+          SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              pickImage();
+            },
+            child: Text('Pick Image'),
           ),
+          SizedBox(height: 16),
+        if (imageFile != null)
+    Image.file(
+      File(imageFile!.path),
+      height: 100,
+      width: double.infinity,
+      fit: BoxFit.cover,
+    ),
         ],
       ),
     );

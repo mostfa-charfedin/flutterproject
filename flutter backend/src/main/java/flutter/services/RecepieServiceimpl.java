@@ -87,6 +87,9 @@ public class RecepieServiceimpl implements RecepieService{
 		        if (updatedRecepie.getIngredient() != null) {
 		            existingRecepie.setIngredient(updatedRecepie.getIngredient());
 		        }
+		        if (updatedRecepie.getImage() != null) {
+		            existingRecepie.setImage(updatedRecepie.getImage());
+		        }
 		        
 		        // Save the updated recepie
 		        return recepieRepository.save(existingRecepie);

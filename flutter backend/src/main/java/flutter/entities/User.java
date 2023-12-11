@@ -14,7 +14,6 @@ public class User implements Serializable {
 	private String lastName;
 	private String email;
 	private String password;
-	private String role;
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -50,12 +49,7 @@ public class User implements Serializable {
 	public void setPassword(String password) {
 		this.password = password;
 	}
-	public String getRole() {
-		return role;
-	}
-	public void setRole(String role) {
-		this.role = role;
-	}
+
 
 	
 	

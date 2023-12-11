@@ -2,10 +2,12 @@ package flutter.entities;
 
 import java.io.Serializable;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 
 @Entity
 public class Recepie implements Serializable {
@@ -13,8 +15,11 @@ public class Recepie implements Serializable {
 	private String name;
 	private String description;
 	private String ingredient;
-	private String imageUrl;
-
+	
+	  @Lob
+	  @Column(name = "image", columnDefinition = "BLOB")
+	  private byte[] image;
+	  
 	@Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
@@ -51,12 +56,16 @@ public class Recepie implements Serializable {
 		this.id = id;
 	}
 	
-    public String getImageUrl() {
-        return imageUrl;
-    }
+    
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
+	  public byte[] getImage() {
+		    return image;
+		  }
 
+		  public void setImage(byte[] image) {
+		    this.image = image;
+		  }
+
+    
+    
 }
