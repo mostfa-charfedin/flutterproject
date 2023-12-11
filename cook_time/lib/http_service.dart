@@ -5,6 +5,7 @@ import 'package:cook_time/inscrit.dart';
 import 'package:cook_time/recepieModel.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'UserModel.dart';
@@ -65,7 +66,7 @@ class HttpService {
       throw Exception('Failed to load user');
     }
   }
-  // Function to save user ID to SharedPreferences
+
   void saveUserIdToSharedPreferences(int userId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setInt('userId', userId);
@@ -145,22 +146,34 @@ class HttpService {
      fetchRecipes();
 
   }
-  Future<void> UpdateRecipe(Recipe recipe) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/recepie/${recipe.id}'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'name': recipe.name,
-        'description': recipe.description,
-        'ingredient': recipe.ingredient,
-        'imageUrl': recipe.image,
-      }),
-    );
+  Future<void> UpdateRecipe(Recipe recipe, {XFile? imageFile}) async {
+    try {
+      String imageUrl = recipe.image;
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to update recipe. Status code: ${response.statusCode}');
+      if (imageFile != null) {
+        imageUrl = await imageToBase64(imageFile.path);
+      }
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/recepie/${recipe.id}'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': recipe.name,
+          'description': recipe.description,
+          'ingredient': recipe.ingredient,
+          'image': imageUrl,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update recipe. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Failed to update recipe: $e');
     }
   }
+
+
 
   Future<void> DeleteRecipe(Recipe recipe) async {
     final response = await http.delete(

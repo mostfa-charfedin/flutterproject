@@ -29,7 +29,7 @@ class _RecipeFormState extends State<RecipeForm> {
     String name = nameController.text;
     String description = descriptionController.text;
     String ingredient = ingredientController.text;
-    String imageUrl = imageUrlController.text;
+
 
     if (name.isEmpty || description.isEmpty || ingredient.isEmpty) {
       // Handle the case where any of the required fields is empty

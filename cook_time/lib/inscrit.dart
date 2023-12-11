@@ -4,6 +4,7 @@ import 'UserModel.dart';
 import 'connection.dart';
 import 'http_service.dart';
 
+
 class RegistrationPage extends StatefulWidget {
   @override
   _RegistrationPageState createState() => _RegistrationPageState();
@@ -21,7 +22,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
     String lastName = _lastNameController.text;
     String email = _emailController.text;
     String password = _passwordController.text;
-
 
     if (name.isEmpty || lastName.isEmpty || email.isEmpty || password.isEmpty) {
       // Handle the case where any of the required fields is empty
@@ -46,32 +46,34 @@ class _RegistrationPageState extends State<RegistrationPage> {
     }
 
     try {
+      User addedUser = User(
+        id: 0,
+        name: name,
+        lastName: lastName,
+        email: email,
+        password: password,
+      );
 
-        User addedUser = User(
-          id: 0,
-          name: name,
-          lastName: lastName,
-          email: email,
-          password: password,
-        );
+      await httpService.addUser(addedUser);
 
-        await httpService.addUser(addedUser);
+      _nameController.clear();
+      _lastNameController.clear();
+      _emailController.clear();
+      _passwordController.clear();
 
-        _nameController.clear();
-        _lastNameController.clear();
-        _emailController.clear();
-        _passwordController.clear();
-        Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()),);
-
+      // Navigate to the login page after successful registration
+      Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()),);
     } catch (e) {
       print('Error adding user: $e');
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Inscription'),
+        backgroundColor: Color(0xFF02F896), // Set your app's primary color
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -80,26 +82,63 @@ class _RegistrationPageState extends State<RegistrationPage> {
           children: [
             TextField(
               controller: _nameController,
-              decoration: InputDecoration(labelText: 'Nom'),
+              decoration: InputDecoration(
+                labelText: 'Nom',
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFF02F896)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+              ),
             ),
+            SizedBox(height: 16.0),
             TextField(
               controller: _lastNameController,
-              decoration: InputDecoration(labelText: 'Prénom'),
+              decoration: InputDecoration(
+                labelText: 'Prénom',
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFF02F896)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+              ),
             ),
+            SizedBox(height: 16.0),
             TextField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(
+                labelText: 'Email',
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFF02F896)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+              ),
             ),
+            SizedBox(height: 16.0),
             TextField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Mot de passe'),
+              decoration: InputDecoration(
+                labelText: 'Mot de passe',
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFF02F896)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+              ),
               obscureText: true,
             ),
-
             SizedBox(height: 16.0),
             ElevatedButton(
               onPressed: addUser,
               child: Text('S\'inscrire'),
+              style: ElevatedButton.styleFrom(
+                primary: Color(0xFF02F896), // Set your button color
+              ),
             ),
           ],
         ),
@@ -107,4 +146,3 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 }
-

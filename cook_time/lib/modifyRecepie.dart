@@ -1,7 +1,5 @@
 
-import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'http_service.dart';
@@ -22,7 +20,7 @@ class _ModifyRecipeState extends State<ModifyRecipe> {
   late TextEditingController descriptionController;
   late TextEditingController ingredientController;
 
-  late XFile? imageFile; // Updated to use XFile from image_picker
+  late XFile? imageFile;
   final picker = ImagePicker();
 
   @override
@@ -40,10 +38,6 @@ class _ModifyRecipeState extends State<ModifyRecipe> {
     String description = descriptionController.text;
     String ingredient = ingredientController.text;
 
-    Future<String> imageToBase64(String path) async {
-      final bytes = await File(path).readAsBytes();
-      return base64Encode(bytes);
-    }
     if (name.isEmpty || description.isEmpty || ingredient.isEmpty) {
       showDialog(
         context: context,
@@ -66,26 +60,25 @@ class _ModifyRecipeState extends State<ModifyRecipe> {
     }
 
     try {
-      String imageUrl = '';
+      String imageUrl = widget.recipe.image;
+
       if (imageFile != null) {
-        // Convert the picked image to base64
-        imageUrl = await imageToBase64(imageFile!.path);
-      } else {
-        imageUrl = widget.recipe.image;
+        imageUrl = await httpService.imageToBase64(imageFile!.path);
       }
 
-    Recipe modifiedRecipe = Recipe(
-      id: widget.recipe.id,
-      name: name,
-      description: description,
-      ingredient: ingredient,
-      image: imageUrl,
-    );
+      Recipe modifiedRecipe = Recipe(
+        id: widget.recipe.id,
+        name: name,
+        description: description,
+        ingredient: ingredient,
+        image: imageUrl,
+      );
 
       Navigator.pop(context, modifiedRecipe);
 
+      await httpService.UpdateRecipe(modifiedRecipe, imageFile: imageFile);
 
-      await httpService.UpdateRecipe(modifiedRecipe);
+
     } catch (e) {
       showDialog(
         context: context,
@@ -106,6 +99,7 @@ class _ModifyRecipeState extends State<ModifyRecipe> {
       );
     }
   }
+
   Future<void> pickImage() async {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -132,10 +126,7 @@ class _ModifyRecipeState extends State<ModifyRecipe> {
             _buildInputField('Ingredients', ingredientController),
             _buildImageUrlInput(),
             SizedBox(height: 16),
-
-
             ElevatedButton(
-
               onPressed: () {
                 submitForm();
               },
@@ -152,7 +143,6 @@ class _ModifyRecipeState extends State<ModifyRecipe> {
     );
   }
 
-
   Widget _buildInputField(String labelText, TextEditingController controller) {
     return Container(
       margin: EdgeInsets.only(bottom: 16),
@@ -166,7 +156,6 @@ class _ModifyRecipeState extends State<ModifyRecipe> {
       ),
     );
   }
-
 
   Widget _buildImageUrlInput() {
     return Container(
@@ -190,7 +179,6 @@ class _ModifyRecipeState extends State<ModifyRecipe> {
               width: double.infinity,
               fit: BoxFit.cover,
             ),
-
         ],
       ),
     );
