@@ -34,7 +34,8 @@ class HttpService {
             ..name ??= 'Default Name'
             ..description ??= 'Default Description'
             ..ingredient ??= 'Default Ingredient'
-            ..image ??= 'Default Image URL';
+            ..image ??= 'Default Image URL'
+            ..Userid ??='Default userid';
         }).toList();
         return recipes;
       } else {
@@ -75,7 +76,7 @@ class HttpService {
   }
   Future<int> getUserIdFromSharedPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    int userId = prefs.getInt('userId') ?? 0; // 0 is a default value if the key is not present
+    int userId = prefs.getInt('userId') ?? 0;
     return userId;
   }
 
@@ -130,8 +131,10 @@ class HttpService {
   }
 
   Future<void> addRecipe(Recipe recipe, File imageFile) async {
+    try {
 
       String base64Image = await imageToBase64(imageFile.path);
+
 
       await http.post(
         Uri.parse('$baseUrl/recepie'),
@@ -141,10 +144,15 @@ class HttpService {
           'description': recipe.description,
           'ingredient': recipe.ingredient,
           'image': base64Image,
+          'Userid':'aa',
         }),
       );
-     fetchRecipes();
 
+
+      fetchRecipes();
+    } catch (e) {
+      print('Error adding recipe: $e');
+    }
   }
   Future<void> UpdateRecipe(Recipe recipe, {XFile? imageFile}) async {
     try {
@@ -162,6 +170,7 @@ class HttpService {
           'description': recipe.description,
           'ingredient': recipe.ingredient,
           'image': imageUrl,
+          'Userid': getUserIdFromSharedPreferences(),
         }),
       );
 

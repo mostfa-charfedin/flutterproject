@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cook_time/UserModel.dart';
+
 class Recipe {
   int id;
   String name;
   String description;
   String ingredient;
   String image;
+  String Userid;
 
   Recipe({
     required this.id,
@@ -14,6 +17,7 @@ class Recipe {
     required this.description,
     required this.ingredient,
     required this.image,
+    required this.Userid,
   });
 
   Map<String, dynamic> toJson() {
@@ -23,6 +27,7 @@ class Recipe {
       'description': description,
       'ingredient': ingredient,
       'image': image,
+      'Userid': Userid,
     };
   }
 
@@ -33,6 +38,7 @@ class Recipe {
       description: json['description'] ?? 'Default Description',
       ingredient: json['ingredient'] ?? 'Default Ingredient',
       image: json['image'] ?? 'Default Image URL',
+      Userid: json['Userid'] ?? 'Default ',
     );
   }
 

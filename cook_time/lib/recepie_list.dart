@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'RecipeDetailPage.dart';
 import 'UserModel.dart';
 import 'connection.dart';
 import 'http_service.dart';
@@ -69,9 +70,39 @@ class _RecipeListState extends State<RecipeList> {
     }
   }
 
+  Future<void> deleteRecipe(Recipe recipe) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete Recipe'),
+          content: Text('Are you sure you want to delete ${recipe.name}?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                try {
+                  Navigator.of(context).pop(); // Close the dialog
+                  await httpService.DeleteRecipe(recipe);
+                  fetchRecipes();
+                } catch (e) {
+                  print('Error deleting recipe: $e');
+                }
+              },
+              child: Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<void> viewProfile() async {
-
     String userId = (await httpService.getUserIdFromSharedPreferences()).toString();
 
     try {
@@ -164,7 +195,6 @@ class _RecipeListState extends State<RecipeList> {
                           lastName: lastNameController.text,
                           email: emailController.text,
                           password: pwdController.text,
-
                         );
 
                         await httpService.updateUser(updatedUser);
@@ -204,7 +234,6 @@ class _RecipeListState extends State<RecipeList> {
     }
   }
 
-
   void filterRecipes(String query) {
     setState(() {
       filteredRecipes = recipes
@@ -229,7 +258,6 @@ class _RecipeListState extends State<RecipeList> {
           IconButton(
             icon: Icon(Icons.logout),
             onPressed: () async {
-
               await httpService.clearSharedPreferences();
               Navigator.pushReplacement(
                 context,
@@ -256,13 +284,12 @@ class _RecipeListState extends State<RecipeList> {
           Expanded(
             child: FutureBuilder(
               future: httpService.fetchRecipes(),
-              builder: (context,AsyncSnapshot<List<Recipe>> snapshot) {
+              builder: (context, AsyncSnapshot<List<Recipe>> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return CircularProgressIndicator();
                 } else if (snapshot.hasError) {
                   return Text('Error: ${snapshot.error}');
                 } else {
-
                   return ListView.builder(
                     itemCount: filteredRecipes.length,
                     itemBuilder: (context, index) {
@@ -278,7 +305,7 @@ class _RecipeListState extends State<RecipeList> {
                           onTap: () async {
                             final result = await Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => ModifyRecipe(recipe: recipe)),
+                              MaterialPageRoute(builder: (context) => RecipeDetailPage(recipe: recipe)),
                             );
 
                             if (result is Recipe) {
@@ -299,9 +326,35 @@ class _RecipeListState extends State<RecipeList> {
                               color: Color(0xFF04C7DC),
                             ),
                           ),
-                          subtitle: Text(
-                            'Description: ${recipe.description}',
-                            style: TextStyle(fontSize: 18, color: Colors.black54),
+                          subtitle: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Description: ${recipe.description}',
+                                  style: TextStyle(fontSize: 18, color: Colors.black54),
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.edit, color: Colors.grey),
+                                onPressed: () {
+                                  // Navigate to ModifyRecipe screen for editing
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => ModifyRecipe(recipe: recipe)),
+                                  ).then((result) {
+                                    if (result is Recipe) {
+                                      refreshModifiedList(result);
+                                    }
+                                  });
+                                },
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.delete, color: Colors.grey),
+                                onPressed: () {
+                                  deleteRecipe(recipe);
+                                },
+                              ),
+                            ],
                           ),
                         ),
                       );

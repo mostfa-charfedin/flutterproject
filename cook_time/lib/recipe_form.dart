@@ -31,8 +31,9 @@ class _RecipeFormState extends State<RecipeForm> {
     String ingredient = ingredientController.text;
 
 
+
     if (name.isEmpty || description.isEmpty || ingredient.isEmpty) {
-      // Handle the case where any of the required fields is empty
+
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -61,7 +62,10 @@ class _RecipeFormState extends State<RecipeForm> {
           description: description,
           ingredient: ingredient,
           image: await imageToBase64(imageFile!.path),
+          Userid:(await httpService.getUserIdFromSharedPreferences()).toString(),
+
         );
+        print(addedRecipe.Userid);
 
         // Convert XFile to File
         File file = File(imageFile!.path);
@@ -72,7 +76,7 @@ class _RecipeFormState extends State<RecipeForm> {
         descriptionController.clear();
         ingredientController.clear();
         imageUrlController.clear();
-        imageFile = null; // Reset imageFile after adding the recipe
+        imageFile = null;
 
         Navigator.pop(context, addedRecipe);
       } else {
@@ -105,7 +109,7 @@ class _RecipeFormState extends State<RecipeForm> {
           children: [
             _buildInputField('Recipe Name', nameController),
             _buildInputField('Description', descriptionController),
-            _buildInputField('Ingredients', ingredientController),
+            _buildInputField('Ingredients (use / to go to the next lign)', ingredientController),
             _buildImageUrlInput(),
             SizedBox(height: 16),
             ElevatedButton(

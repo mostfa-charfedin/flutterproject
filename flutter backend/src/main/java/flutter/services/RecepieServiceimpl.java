@@ -90,6 +90,10 @@ public class RecepieServiceimpl implements RecepieService{
 		        if (updatedRecepie.getImage() != null) {
 		            existingRecepie.setImage(updatedRecepie.getImage());
 		        }
+		        if (updatedRecepie.getUserid() != null) {
+		            existingRecepie.setUserid(updatedRecepie.getUserid());
+		        }
+		        
 		        
 		        // Save the updated recepie
 		        return recepieRepository.save(existingRecepie);
