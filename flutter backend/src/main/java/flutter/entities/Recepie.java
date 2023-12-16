@@ -15,7 +15,7 @@ public class Recepie implements Serializable {
 	private String name;
 	private String description;
 	private String ingredient;
-	private String Userid;
+	private String userId;
 	  @Lob
 	  @Column(name = "image", columnDefinition = "BLOB")
 	  private byte[] image;
@@ -67,11 +67,11 @@ public class Recepie implements Serializable {
 		  }
 
 		public String getUserid() {
-			return Userid;
+			return userId;
 		}
 
 		public void setUserid(String userid) {
-			Userid = userid;
+			userId = userid;
 		}
 
     
